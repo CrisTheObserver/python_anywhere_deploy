@@ -4,27 +4,37 @@
         <meta charset="UTF-8">
         <title>Formants</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+        <style>
+            table {
+                border-collapse: collapse;
+                margin: 0 auto;
+            }
+            
+            td, th {
+                color: white;
+                border: 3px solid #dddddd;
+                text-align: center;
+                padding: 8px;
+            }
+        </style>
     </head>
     <body style = "display: flex;justify-content: center;align-items: center;height: 100vh;font-size: small;background-color:darkslategrey;">
-
-        <div style="background-color:grey;">
-            F0/Pitch = {{f0}}<br>
-            F1 = {{f1}}<br>
-            F2 = {{f2}}<br>
-            F3 = {{f3}}<br>
-            F4 = {{f4}}<br>
-            I = {{I}}<br>
-            HNR = {{HNR}}<br>
-            localJitter = {{localJitter}}<br>
-            localabsoluteJitter = {{localabsoluteJitter}}<br>
-            rapJitter = {{rapJitter}}<br>
-            ppq5Jitter = {{ppq5Jitter}}<br>
-            ddpJitter = {{ddpJitter}}<br>
-            localShimmer = {{localShimmer}}<br>
-            localdbShimmer = {{localdbShimmer}}<br>
-            apq3Shimmer = {{apq3Shimmer}}<br>
-            aqpq5Shimmer = {{aqpq5Shimmer}}<br>
-            apq11Shimmer = {{apq11Shimmer}}<br>
-            ddaShimmer = {{ddaShimmer}}
-        </div>
+        <table style="background-color: darkslategrey; width: 100%;">
+            <tr>
+                <tr>
+                    <th>Nombre</th>
+                    {% for arg in args %}
+                        <th>{{arg}}</th>
+                    {% endfor %}
+                </tr>
+            </tr>
+            <tr>
+                <tr>
+                    <th>{{name}}</th>
+                    {% for val in vals %}
+                        <th>{{val}}</th>
+                    {% endfor %}
+                </tr>
+            </tr>
+        </table>
     </body>
