@@ -8,9 +8,12 @@ from parselmouth import praat
 
 import numpy as np
 
-def audio_analysis(audio_name):
+import os
+import json
 
-    sound = parselmouth.Sound(audio_name)
+def audio_analysis(path, audio_name):
+
+    sound = parselmouth.Sound(path)
     f0min=75
     f0max=300
     pointProcess = praat.call(sound, "To PointProcess (periodic, cc)", f0min, f0max)
@@ -56,26 +59,37 @@ def audio_analysis(audio_name):
     apq11Shimmer =  praat.call([sound, pointProcess], "Get shimmer (apq11)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
     ddaShimmer = praat.call([sound, pointProcess], "Get shimmer (dda)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
 
-    return [
-            round(F0, 1),
-            round(np.nanmean(n_f1), 1),
-            round(np.nanmean(n_f2), 1),
-            round(np.nanmean(n_f3), 1),
-            round(np.nanmean(n_f4), 1),
-            round(sound.get_intensity(), 2),
-            round(hnr, 2),
-            round(localJitter,6),
-            round(localabsoluteJitter,6),
-            round(rapJitter,6),
-            round(ppq5Jitter,6),
-            round(ddpJitter,6),
-            round(localShimmer,6),
-            round(localdbShimmer,6),
-            round(apq3Shimmer,6),
-            round(aqpq5Shimmer,6),
-            round(apq11Shimmer,6),
-            round(ddaShimmer,6)
-            ]
+    return {
+        "name": audio_name,
+        "f0": round(F0, 1),
+        "f1": round(np.nanmean(n_f1), 1),
+        "f2": round(np.nanmean(n_f2), 1),
+        "f3": round(np.nanmean(n_f3), 1),
+        "f4": round(np.nanmean(n_f4), 1),
+        "Intensity": round(sound.get_intensity(), 2),
+        "HNR": round(hnr, 2),
+        "localJitter": round(localJitter,6),
+        "localabsoluteJitter": round(localabsoluteJitter,6),
+        "rapJitter": round(rapJitter,6),
+        "ppq5Jitter": round(ppq5Jitter,6),
+        "ddpJitter": round(ddpJitter,6),
+        "localShimmer": round(localShimmer,6),
+        "localdbShimmer": round(localdbShimmer,6),
+        "apq3Shimmer": round(apq3Shimmer,6),
+        "aqpq5Shimmer": round(aqpq5Shimmer,6),
+        "apq11Shimmer": round(apq11Shimmer,6),
+        "ddaShimmer": round(ddaShimmer,6)
+        }
+def write_json(new_data, filename):
+    with open(filename,'r+') as file:
+          # First we load existing data into a dict.
+        file_data = json.load(file)
+        # Join new_data with file_data inside emp_details
+        file_data["audios"].append(new_data)
+        # Sets file's current position at offset.
+        file.seek(0)
+        # convert back to json.
+        json.dump(file_data, file, indent = 4)
 
 
 def index_view(request):
@@ -83,28 +97,42 @@ def index_view(request):
         return render(request,"index.html")
 
     if request.method == 'POST':
+        username = request.POST['username']
+
+        new_user = not os.path.isdir(username)
+
         audio = request.FILES['audio']
         try:
             audio2 = request.FILES['audio2']
-            audio2_name = default_storage.save(audio2.name, audio2)
+            audio2_name = default_storage.save(username+'/'+audio2.name, audio2)
+            res2 = audio_analysis(audio2_name, audio2.name)
         except:
             audio2_name = ''
-        audio_name = default_storage.save(audio.name, audio)
+            res2 = False
+        audio_name = default_storage.save(username+'/'+audio.name, audio)
+        res = audio_analysis(audio_name, audio.name)
 
-        return HttpResponseRedirect('/show_audio/?audio='+audio_name+'&audio2='+audio2_name)
+        if new_user:
+            audio_list = {
+                "audios": [
+                ]
+            }
+            audio_list_object = json.dumps(audio_list, indent=4)
+            with open(username+"/audio_list.json", "w") as outfile:
+                outfile.write(audio_list_object)
+        write_json(res, username+"/audio_list.json")
+        if res2:
+            write_json(res2, username+"/audio_list.json")
+
+        return HttpResponseRedirect('/show_audio/?username='+username)
 
 def show_audio_view(request):
-    audio_name = request.GET["audio"]
-    res = audio_analysis(audio_name)
+    username = request.GET["username"]
 
-    audio2_name = request.GET["audio2"]
-    res2 = []
-    if audio2_name != '':
-        res2 = audio_analysis(audio2_name)
+    with open(username+'/audio_list.json', 'r') as openfile:
+        json_object = json.load(openfile)
     
     return render(request,"show_audio.html", {
-        "name": audio_name,
-        "name2": audio2_name,
         "args":[
             "f0",
             "f1",
@@ -124,5 +152,4 @@ def show_audio_view(request):
             "aqpq5Shimmer",
             "apq11Shimmer",
             "ddaShimmer"],
-        "vals":res,
-        "vals2":res2})
+        "audios":json_object})

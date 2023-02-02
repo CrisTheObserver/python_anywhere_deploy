@@ -30,23 +30,14 @@
                     {% endfor %}
                 </tr>
             </tr>
+            {% for audio in audios.audios %}
             <tr>
                 <tr>
-                    <th>{{name}}</th>
-                    {% for val in vals %}
+                    {% for key, val in audio.items %}
                         <th>{{val}}</th>
                     {% endfor %}
                 </tr>
             </tr>
-            <tr>
-                <tr>
-                    {% if name2 != '' %}
-                    <th>{{name2}}</th>
-                    {% endif %}
-                    {% for val in vals2 %}
-                        <th>{{val}}</th>
-                    {% endfor %}
-                </tr>
-            </tr>
+            {% endfor %}
         </table>
     </body>
