@@ -1,6 +1,4 @@
-from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.template import Template, Context, context, loader
 from django.shortcuts import render
 
 from django.core.files.storage import default_storage
@@ -9,29 +7,15 @@ import parselmouth
 from parselmouth import praat
 
 import numpy as np
-import math
 
+def audio_analysis(audio_name):
 
-def index_view(request):
-    if request.method == 'GET': 
-        return render(request,"index.html")
-
-    if request.method == 'POST':
-        audio = request.FILES['audio']
-        audio_name = default_storage.save(audio.name, audio)
-
-        return HttpResponseRedirect('/show_audio/?audio='+audio_name)
-
-def show_audio_view(request):
-    audio_name = request.GET["audio"]
     sound = parselmouth.Sound(audio_name)
-
     f0min=75
     f0max=300
     pointProcess = praat.call(sound, "To PointProcess (periodic, cc)", f0min, f0max)
 
     formants = praat.call(sound, "To Formant (burg)", 0.0025, 5, 5000, 0.025, 50)
-    intensity = praat.call(sound, "To Intensity...", 100, 0, "yes")
 
     numPoints = praat.call(pointProcess, "Get number of points")
     f1_list = []
@@ -71,9 +55,56 @@ def show_audio_view(request):
     aqpq5Shimmer = praat.call([sound, pointProcess], "Get shimmer (apq5)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
     apq11Shimmer =  praat.call([sound, pointProcess], "Get shimmer (apq11)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
     ddaShimmer = praat.call([sound, pointProcess], "Get shimmer (dda)", 0, 0, 0.0001, 0.02, 1.3, 1.6)
+
+    return [
+            round(F0, 1),
+            round(np.nanmean(n_f1), 1),
+            round(np.nanmean(n_f2), 1),
+            round(np.nanmean(n_f3), 1),
+            round(np.nanmean(n_f4), 1),
+            round(sound.get_intensity(), 2),
+            round(hnr, 2),
+            round(localJitter,6),
+            round(localabsoluteJitter,6),
+            round(rapJitter,6),
+            round(ppq5Jitter,6),
+            round(ddpJitter,6),
+            round(localShimmer,6),
+            round(localdbShimmer,6),
+            round(apq3Shimmer,6),
+            round(aqpq5Shimmer,6),
+            round(apq11Shimmer,6),
+            round(ddaShimmer,6)
+            ]
+
+
+def index_view(request):
+    if request.method == 'GET': 
+        return render(request,"index.html")
+
+    if request.method == 'POST':
+        audio = request.FILES['audio']
+        try:
+            audio2 = request.FILES['audio2']
+            audio2_name = default_storage.save(audio2.name, audio2)
+        except:
+            audio2_name = ''
+        audio_name = default_storage.save(audio.name, audio)
+
+        return HttpResponseRedirect('/show_audio/?audio='+audio_name+'&audio2='+audio2_name)
+
+def show_audio_view(request):
+    audio_name = request.GET["audio"]
+    res = audio_analysis(audio_name)
+
+    audio2_name = request.GET["audio2"]
+    res2 = []
+    if audio2_name != '':
+        res2 = audio_analysis(audio2_name)
     
     return render(request,"show_audio.html", {
         "name": audio_name,
+        "name2": audio2_name,
         "args":[
             "f0",
             "f1",
@@ -93,23 +124,5 @@ def show_audio_view(request):
             "aqpq5Shimmer",
             "apq11Shimmer",
             "ddaShimmer"],
-        "vals":[
-            round(F0, 1),
-            round(np.nanmean(n_f1), 1),
-            round(np.nanmean(n_f2), 1),
-            round(np.nanmean(n_f3), 1),
-            round(np.nanmean(n_f4), 1),
-            round(sound.get_intensity(), 2),
-            round(hnr, 2),
-            round(localJitter,6),
-            round(localabsoluteJitter,6),
-            round(rapJitter,6),
-            round(ppq5Jitter,6),
-            round(ddpJitter,6),
-            round(localShimmer,6),
-            round(localdbShimmer,6),
-            round(apq3Shimmer,6),
-            round(aqpq5Shimmer,6),
-            round(apq11Shimmer,6),
-            round(ddaShimmer,6)
-            ]})
+        "vals":res,
+        "vals2":res2})
