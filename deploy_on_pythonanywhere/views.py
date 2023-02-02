@@ -11,6 +11,8 @@ import numpy as np
 import os
 import json
 
+import csv
+
 def audio_analysis(path, audio_name):
 
     sound = parselmouth.Sound(path)
@@ -82,19 +84,22 @@ def audio_analysis(path, audio_name):
         }
 def write_json(new_data, filename):
     with open(filename,'r+') as file:
-          # First we load existing data into a dict.
         file_data = json.load(file)
-        # Join new_data with file_data inside emp_details
         file_data["audios"].append(new_data)
-        # Sets file's current position at offset.
         file.seek(0)
-        # convert back to json.
         json.dump(file_data, file, indent = 4)
 
+def write_csv(new_data, username):
+    with open('historical.csv', 'a', newline='') as csvfile:
+        historical_writer = csv.writer(csvfile)
+        new_row = [username]
+        for key in new_data:
+            new_row += [new_data[key]]
+        historical_writer.writerow(new_row)
 
-def index_view(request):
+def upload_audio_view(request):
     if request.method == 'GET': 
-        return render(request,"index.html")
+        return render(request,"upload_audio.html")
 
     if request.method == 'POST':
         username = request.POST['username']
@@ -121,8 +126,10 @@ def index_view(request):
             with open(username+"/audio_list.json", "w") as outfile:
                 outfile.write(audio_list_object)
         write_json(res, username+"/audio_list.json")
+        write_csv(res, username)
         if res2:
             write_json(res2, username+"/audio_list.json")
+            write_csv(res2, username)
 
         return HttpResponseRedirect('/show_audio/?username='+username)
 
@@ -153,3 +160,14 @@ def show_audio_view(request):
             "apq11Shimmer",
             "ddaShimmer"],
         "audios":json_object})
+
+def historical_csv_view(request):
+
+    with open('historical.csv') as csvfile:
+        csvreader = csv.reader(csvfile)
+        csv_list = []
+        for row in csvreader:
+            csv_list += [row]
+    return render(request,"historical.html", {
+        "args":csv_list[0],
+        "audios":csv_list[1:]})
