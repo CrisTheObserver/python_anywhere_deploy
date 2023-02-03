@@ -9,12 +9,10 @@ from parselmouth import praat
 import numpy as np
 
 import os
-import json
 
 import csv
 
 def audio_analysis(path, audio_name):
-
     sound = parselmouth.Sound(path)
     f0min=75
     f0max=300
@@ -82,17 +80,16 @@ def audio_analysis(path, audio_name):
         "apq11Shimmer": round(apq11Shimmer,6),
         "ddaShimmer": round(ddaShimmer,6)
         }
-def write_json(new_data, filename):
-    with open(filename,'r+') as file:
-        file_data = json.load(file)
-        file_data["audios"].append(new_data)
-        file.seek(0)
-        json.dump(file_data, file, indent = 4)
 
-def write_csv(new_data, username):
-    with open('historical.csv', 'a', newline='') as csvfile:
+#This function receives a dictionary and write its information in the specified CSV file
+def write_csv(new_data, username, filename):
+    with open(filename, 'a', newline='') as csvfile:
         historical_writer = csv.writer(csvfile)
-        new_row = [username]
+        #if we're writing the Historical CSV, we manually add the username field
+        if filename == 'historical.csv':
+            new_row = [username]
+        else:
+            new_row = []
         for key in new_data:
             new_row += [new_data[key]]
         historical_writer.writerow(new_row)
@@ -104,8 +101,10 @@ def upload_audio_view(request):
     if request.method == 'POST':
         username = request.POST['username']
 
+        #Checking if a user is uploading for the first time (to create folder and CSV file) 
         new_user = not os.path.isdir(username)
 
+        #Saving and analyzing the received audios (the directory is created here in case we have a new user)
         audio = request.FILES['audio']
         try:
             audio2 = request.FILES['audio2']
@@ -117,57 +116,43 @@ def upload_audio_view(request):
         audio_name = default_storage.save(username+'/'+audio.name, audio)
         res = audio_analysis(audio_name, audio.name)
 
+        #Creating CSV file in case we have a new user
         if new_user:
-            audio_list = {
-                "audios": [
-                ]
-            }
-            audio_list_object = json.dumps(audio_list, indent=4)
-            with open(username+"/audio_list.json", "w") as outfile:
-                outfile.write(audio_list_object)
-        write_json(res, username+"/audio_list.json")
-        write_csv(res, username)
+            with open(username+'/audio_list.csv', 'w', newline='') as csvfile:
+                fieldnames = ["Nombre archivo","F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+        
+        #Writing the data on CSV files
+        write_csv(res, username, username+"/audio_list.csv")
+        write_csv(res, username, "historical.csv")
         if res2:
-            write_json(res2, username+"/audio_list.json")
-            write_csv(res2, username)
+            write_csv(res2, username, username+"/audio_list.csv")
+            write_csv(res2, username, "historical.csv")
 
+        #Displays a table with all the audios uploaded by this user (including previously uploaded ones in case they exist)
         return HttpResponseRedirect('/show_audio/?username='+username)
 
 def show_audio_view(request):
     username = request.GET["username"]
 
-    with open(username+'/audio_list.json', 'r') as openfile:
-        json_object = json.load(openfile)
-    
-    return render(request,"show_audio.html", {
-        "args":[
-            "f0",
-            "f1",
-            "f2",
-            "f3",
-            "f4",
-            "I",
-            "HNR",
-            "localJitter",
-            "localabsoluteJitter",
-            "rapJitter",
-            "ppq5Jitter",
-            "ddpJitter",
-            "localShimmer",
-            "localdbShimmer",
-            "apq3Shimmer",
-            "aqpq5Shimmer",
-            "apq11Shimmer",
-            "ddaShimmer"],
-        "audios":json_object})
+    #Reads the CSV and displays its information
+    with open(username+'/audio_list.csv') as csvfile:
+        csvreader = csv.reader(csvfile)
+        csv_list = []
+        for row in csvreader:
+            csv_list += [row]
+    return render(request,"table_display.html", {
+        "args":csv_list[0],
+        "audios":csv_list[1:]})
 
 def historical_csv_view(request):
-
+    #Reads the CSV and displays its information
     with open('historical.csv') as csvfile:
         csvreader = csv.reader(csvfile)
         csv_list = []
         for row in csvreader:
             csv_list += [row]
-    return render(request,"historical.html", {
+    return render(request,"table_display.html", {
         "args":csv_list[0],
         "audios":csv_list[1:]})

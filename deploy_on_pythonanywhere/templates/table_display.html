@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <table>
+            <tr>
+                <tr>
+                    {% for arg in args %}
+                        <th>{{arg}}</th>
+                    {% endfor %}
+                </tr>
+            </tr>
+            {% for audio in audios %}
+            <tr>
+                <tr>
+                    {% for val in audio %}
+                        <th>{{val}}</th>
+                    {% endfor %}
+                </tr>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endblock content %}
