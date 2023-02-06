@@ -1,16 +1,14 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
 from django.core.files.storage import default_storage
 
 import parselmouth 
 from parselmouth import praat
-
 import numpy as np
-
 import os
-
 import csv
+import pandas as pd
 
 def audio_analysis(path, audio_name):
     sound = parselmouth.Sound(path)
@@ -95,8 +93,9 @@ def write_csv(new_data, username, filename):
         historical_writer.writerow(new_row)
 
 def upload_audio_view(request):
-    if request.method == 'GET': 
-        return render(request,"upload_audio.html")
+    if request.method == 'GET':
+        #With this we render the page with an undetermined number of optional audio file inputs
+        return render(request,"upload_audio.html",{"range":range(2,6)})
 
     if request.method == 'POST':
         username = request.POST['username']
@@ -105,54 +104,67 @@ def upload_audio_view(request):
         new_user = not os.path.isdir(username)
 
         #Saving and analyzing the received audios (the directory is created here in case we have a new user)
-        audio = request.FILES['audio']
-        try:
-            audio2 = request.FILES['audio2']
-            audio2_name = default_storage.save(username+'/'+audio2.name, audio2)
-            res2 = audio_analysis(audio2_name, audio2.name)
-        except:
-            audio2_name = ''
-            res2 = False
-        audio_name = default_storage.save(username+'/'+audio.name, audio)
-        res = audio_analysis(audio_name, audio.name)
+        audio_list = request.FILES.getlist('audio')
+        for audio in audio_list:
+            audio_name = default_storage.save(username+'/'+audio.name, audio)
+            res = audio_analysis(audio_name, audio.name)
 
-        #Creating CSV file in case we have a new user
-        if new_user:
-            with open(username+'/audio_list.csv', 'w', newline='') as csvfile:
-                fieldnames = ["Nombre archivo","F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-        
-        #Writing the data on CSV files
-        write_csv(res, username, username+"/audio_list.csv")
-        write_csv(res, username, "historical.csv")
-        if res2:
-            write_csv(res2, username, username+"/audio_list.csv")
-            write_csv(res2, username, "historical.csv")
+            #Creating CSV file in case we have a new user
+            if new_user:
+                with open(username+'/audio_list.csv', 'w', newline='') as csvfile:
+                    fieldnames = ["Nombre archivo","F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    new_user = False
+            
+            #Writing the data on CSV files
+            write_csv(res, username, username+"/audio_list.csv")
+            write_csv(res, username, "historical.csv")
 
         #Displays a table with all the audios uploaded by this user (including previously uploaded ones in case they exist)
         return HttpResponseRedirect('/show_audio/?username='+username)
 
 def show_audio_view(request):
     username = request.GET["username"]
-
-    #Reads the CSV and displays its information
+    #Reads the CSV and puts its information in an array
     with open(username+'/audio_list.csv') as csvfile:
         csvreader = csv.reader(csvfile)
         csv_list = []
         for row in csvreader:
             csv_list += [row]
+    #We render the page with the information we got
     return render(request,"table_display.html", {
         "args":csv_list[0],
-        "audios":csv_list[1:]})
+        "audios":csv_list[1:],
+        "filename":username+'/audio_list.csv'})
 
 def historical_csv_view(request):
-    #Reads the CSV and displays its information
+    #Reads the CSV and puts its information in an array
     with open('historical.csv') as csvfile:
         csvreader = csv.reader(csvfile)
         csv_list = []
         for row in csvreader:
             csv_list += [row]
+    #We render the page with the information we got
     return render(request,"table_display.html", {
         "args":csv_list[0],
-        "audios":csv_list[1:]})
+        "audios":csv_list[1:],
+        "filename":"historical.csv"})
+    
+
+def download_file(request):
+    filename = request.GET["filename"]
+    #This gives us the path without the extension
+    path = filename[:len(filename)-4]
+
+    #We create an Excel file from our CSV file and save it alongside it
+    read_file = pd.read_csv(filename, delimiter=",")
+    new_file = pd.ExcelWriter(path+".xlsx")
+    read_file.to_excel(new_file, index = False)
+    new_file.save()
+
+    #With this we trigger the file download
+    with open(path+".xlsx", 'rb') as xlsx_file:
+        response = HttpResponse(xlsx_file, content_type='application/vnd.openxmlformatsofficedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename={0}'.format(path+".xlsx")
+        return response

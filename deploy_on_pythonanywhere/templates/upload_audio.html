@@ -1,23 +1,25 @@
 {% extends "base.html" %}
 
 {% block content %}
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="col-md-6">
-                <label for="audio">Nombre de usuario</label>
-                <input type="text" class="form-control" id="username" name="username" required>
-            </div>
-            <div class="col-md-6">
-                <label for="audio">Audio 1</label>
-                <input type="file" class="form-control" id="audio" name="audio" required>
-            </div>
-            <div class="col-md-6">
-                <label for="audio">Audio 2 (opcional)</label>
-                <input type="file" class="form-control" id="audio2" name="audio2">
-            </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label for="audio">Nombre de usuario</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        <div class="col-md-6">
+            <label for="audio">Audio 1</label>
+            <input type="file" class="form-control" id="audio" name="audio" required>
+        </div>
+        {% for i in range %}
+        <div class="col-md-6">
+            <label for="audio">Audio {{i}} (opcional)</label>
+            <input type="file" class="form-control" id="audio" name="audio">
+        </div>
+        {% endfor %}
             
-            <div class="line">
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-        </form>
-        {% endblock content %}
+        <div class="line">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+{% endblock content %}

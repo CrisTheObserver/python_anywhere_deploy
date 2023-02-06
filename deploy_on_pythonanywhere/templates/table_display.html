@@ -19,4 +19,9 @@
             </tr>
             {% endfor %}
         </table>
-        {% endblock content %}
+        {% if filename %}
+        <a href="../download_file/?filename={{filename}}">
+            <button type="button" class="btn btn-primary">Descargar</button>
+        </a>
+        {% endif %}
+{% endblock content %}
