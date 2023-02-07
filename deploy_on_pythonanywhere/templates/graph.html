@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div>
+        {% for arg in args %}
+        <a href="../display_{{ format }}_graph/?index={{ forloop.counter0 }}">
+            <button type="button" class="btn btn-primary">{{arg}}</button>
+        </a><br>
+        {% endfor %}
+    </div>
+{% endblock content %}

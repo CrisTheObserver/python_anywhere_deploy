@@ -100,7 +100,9 @@ def write_csv(new_data, username, filename):
 def upload_audio_view(request):
     if request.method == 'GET':
         #With this we render the page with an undetermined number of optional audio file inputs
-        return render(request,"upload_audio.html",{"range":range(2,6)})
+        return render(request,"upload_audio.html",{
+            "title":"Subir archivos",
+            "range":range(2,6)})
 
     if request.method == 'POST':
         username = request.POST['username']
@@ -139,6 +141,7 @@ def show_audio_view(request):
             csv_list += [row]
     #We render the page with the information we got
     return render(request,"table_display.html", {
+        "title":"Audios de {0}".format(username),
         "args":csv_list[0],
         "audios":csv_list[1:],
         "filename":username+'/audio_list.csv'})
@@ -152,6 +155,7 @@ def historical_csv_view(request):
             csv_list += [row]
     #We render the page with the information we got
     return render(request,"table_display.html", {
+        "title":"CSV histórico",
         "args":csv_list[0],
         "audios":csv_list[1:],
         "filename":"historical.csv"})
@@ -174,23 +178,74 @@ def download_file(request):
         response['Content-Disposition'] = 'attachment; filename={0}'.format(path+".xlsx")
         return response
 
-def f0_view(request):
+def hourly_graph_view(request):
+    #Renders the selector after selecting graph type
+    return render(request, "graph.html",{
+        "title":"Selección de coeficiente",
+        "format":"hourly",
+        "args":["F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+    })
+
+def historical_graph_view(request):
+    #Renders the selector after selecting graph type
+    return render(request, "graph.html",{
+        "title":"Selección de coeficiente",
+        "format":"historical",
+        "args":["F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+    })
+
+def display_hourly_graph_view(request):
+    #This index that represents the value we have to display
+    index = request.GET["index"]
     with open('historical.csv') as csvfile:
         csvreader = csv.reader(csvfile)
+        #Here we'll store the data that we need for the graph (username, date and the value that we want to show)
         user_list = []
         date_list = []
-        f0_list = []
+        arg_list = []
         for row in csvreader:
             user_list.append(row[0])
             date_list.append(row[2])
-            f0_list.append(row[3])
+            #To get the desired value, we have to add 3 to the index received (the first 2 rows are for username, filename and date)
+            arg_list.append(row[int(index)+3])
+        #Since we want to show only based on the hour, we set all dates to the same year, month and day, so that hour and minutes are the only difference (the date was picked arbitrarily)
+        #The data in the CSV is stored as strings, so we change it to the correct type
         date_list[1:]=[datetime.strptime(x, '%Y-%m-%d %H:%M').replace(year=2010,month=1,day=1) for x in date_list[1:]]
-        f0_list[1:]=[float(x) for x in f0_list[1:]]
+        arg_list[1:]=[float(x) for x in arg_list[1:]]
 
-        df = pd.DataFrame(data={user_list[0]:user_list[1:],date_list[0]:date_list[1:],f0_list[0]:f0_list[1:]})
-        fig = px.scatter(df, x=date_list[0], y=f0_list[0], color=user_list[0], template='plotly_dark')
+        #The first element of each list is the label, and the rest are the values
+        df = pd.DataFrame(data={user_list[0]:user_list[1:],date_list[0]:date_list[1:],arg_list[0]:arg_list[1:]})
+        fig = px.scatter(df, x=date_list[0], y=arg_list[0], color=user_list[0], template='plotly_dark')
+        #If we don't change the format, it'll show that all files were uploaded on the same day, which is not ideal
         fig.update_xaxes(tickformat="%H:%M")
-
         div = plot(fig, auto_open=False, output_type='div')
-    return render(request,"f0_graph.html", {
+    return render(request,"display_graph.html", {
+        "title":"Análisis de {0} por hora del día".format(arg_list[0]),
+        "graph":div})
+
+def display_historical_graph_view(request):
+    #This index that represents the value we have to display
+    index = request.GET["index"]
+
+    with open('historical.csv') as csvfile:
+        csvreader = csv.reader(csvfile)
+        #Here we'll store the data that we need for the graph (username, date and the value that we want to show)
+        user_list = []
+        date_list = []
+        arg_list = []
+        for row in csvreader:
+            user_list.append(row[0])
+            date_list.append(row[2])
+            #To get the desired value, we have to add 3 to the index received (the first 2 rows are for username, filename and date)
+            arg_list.append(row[int(index)+3])
+        #The data in the CSV is stored as strings, so we change it to the correct type
+        date_list[1:]=[datetime.strptime(x, '%Y-%m-%d %H:%M') for x in date_list[1:]]
+        arg_list[1:]=[float(x) for x in arg_list[1:]]
+
+        #The first element of each list is the label, and the rest are the values
+        df = pd.DataFrame(data={user_list[0]:user_list[1:],date_list[0]:date_list[1:],arg_list[0]:arg_list[1:]})
+        fig = px.scatter(df, x=date_list[0], y=arg_list[0], color=user_list[0], template='plotly_dark')
+        div = plot(fig, auto_open=False, output_type='div')
+    return render(request,"display_graph.html", {
+        "title":"Análisis histórico de {0}".format(arg_list[0]),
         "graph":div})
