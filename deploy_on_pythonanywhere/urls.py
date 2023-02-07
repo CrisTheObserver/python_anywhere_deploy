@@ -23,4 +23,5 @@ urlpatterns = [
     path('show_audio/', views.show_audio_view),
     path('historical/', views.historical_csv_view),
     path('download_file/', views.download_file),
+    path('f0/', views.f0_view),
 ]

@@ -9,6 +9,9 @@ import numpy as np
 import os
 import csv
 import pandas as pd
+from datetime import datetime
+import plotly.express as px
+from plotly.offline import plot
 
 def audio_analysis(path, audio_name):
     sound = parselmouth.Sound(path)
@@ -59,6 +62,7 @@ def audio_analysis(path, audio_name):
 
     return {
         "name": audio_name,
+        "date":datetime.today().strftime('%Y-%m-%d %H:%M'),
         "f0": round(F0, 1),
         "f1": round(np.nanmean(n_f1), 1),
         "f2": round(np.nanmean(n_f2), 1),
@@ -88,6 +92,7 @@ def write_csv(new_data, username, filename):
             new_row = [username]
         else:
             new_row = []
+        
         for key in new_data:
             new_row += [new_data[key]]
         historical_writer.writerow(new_row)
@@ -112,7 +117,7 @@ def upload_audio_view(request):
             #Creating CSV file in case we have a new user
             if new_user:
                 with open(username+'/audio_list.csv', 'w', newline='') as csvfile:
-                    fieldnames = ["Nombre archivo","F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+                    fieldnames = ["Nombre archivo","Fecha de subida", "F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     new_user = False
@@ -168,3 +173,24 @@ def download_file(request):
         response = HttpResponse(xlsx_file, content_type='application/vnd.openxmlformatsofficedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename={0}'.format(path+".xlsx")
         return response
+
+def f0_view(request):
+    with open('historical.csv') as csvfile:
+        csvreader = csv.reader(csvfile)
+        user_list = []
+        date_list = []
+        f0_list = []
+        for row in csvreader:
+            user_list.append(row[0])
+            date_list.append(row[2])
+            f0_list.append(row[3])
+        date_list[1:]=[datetime.strptime(x, '%Y-%m-%d %H:%M').replace(year=2010,month=1,day=1) for x in date_list[1:]]
+        f0_list[1:]=[float(x) for x in f0_list[1:]]
+
+        df = pd.DataFrame(data={user_list[0]:user_list[1:],date_list[0]:date_list[1:],f0_list[0]:f0_list[1:]})
+        fig = px.scatter(df, x=date_list[0], y=f0_list[0], color=user_list[0], template='plotly_dark')
+        fig.update_xaxes(tickformat="%H:%M")
+
+        div = plot(fig, auto_open=False, output_type='div')
+    return render(request,"f0_graph.html", {
+        "graph":div})
