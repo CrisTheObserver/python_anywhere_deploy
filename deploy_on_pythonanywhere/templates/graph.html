@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div>
+    <div class="col-lg-*">
         {% for arg in args %}
         <a href="../display_{{ format }}_graph/?index={{ forloop.counter0 }}">
             <button type="button" class="btn btn-primary">{{arg}}</button>
-        </a><br>
+        </a>
         {% endfor %}
     </div>
 {% endblock content %}
