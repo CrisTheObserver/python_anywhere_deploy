@@ -163,3 +163,36 @@ def display_historical_graph_view(request):
     return render(request,"display_graph.html", {
         "title":"Análisis histórico de {0}".format(arg_list[0]),
         "graph":div})
+
+def user_list_view(request):
+    #Renders a list with all users
+    with open('historical.csv') as csvfile:
+        csvreader = csv.reader(csvfile)
+        #Here we'll store the data that we need for the graph (username, date and the value that we want to show)
+        user_list = []
+        for row in csvreader:
+            user_list.append(row[0])
+    return render(request, "user_list.html",{
+        "title":"Selección de usuario",
+        "users":[*set(user_list[1:])]
+    })
+
+def user_info_view(request):
+    #Renders the info of the requested user
+    user = request.GET["user"]
+
+    with open(user+'/audio_list.csv') as csvfile:
+        csvreader = csv.reader(csvfile)
+        csv_list = []
+        for row in csvreader:
+            csv_list += [row]
+        csv_list[0][1] = "Fecha más reciente"
+        tup = []
+        for i in range(1,len(csv_list[0])-1):
+            tup += [[csv_list[0][i], csv_list[-1][i]]]
+
+    return render(request, "user_info.html",{
+        "title":"Selección de usuario",
+        "user":user,
+        "args":tup
+    })

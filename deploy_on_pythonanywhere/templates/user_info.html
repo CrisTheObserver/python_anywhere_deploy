@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 style="color: white;">Paciente {{ user }}</h1>
+    <div class="col-lg-*">
+        {% for arg in args %}
+            <p style="color: white;">{{ arg.0 }} = {{ arg.1 }}</p>
+        {% endfor %}
+    </div>
+{% endblock content %}

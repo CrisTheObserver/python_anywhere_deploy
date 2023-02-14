@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="col-lg-*">
+        {% for user in users %}
+        <a href="../user_info/?user={{ user }}">
+            <button type="button" class="btn btn-primary">{{user}}</button>
+        </a>
+        {% endfor %}
+    </div>
+{% endblock content %}

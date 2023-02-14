@@ -27,4 +27,6 @@ urlpatterns = [
     path('historical_graph/', views.historical_graph_view),
     path('display_hourly_graph/', views.display_hourly_graph_view),
     path('display_historical_graph/', views.display_historical_graph_view),
+    path('user_list/', views.user_list_view),
+    path('user_info/', views.user_info_view),
 ]
