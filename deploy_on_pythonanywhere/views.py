@@ -33,7 +33,7 @@ def upload_audio_view(request):
             #Creating CSV file in case we have a new user
             if new_user:
                 with open(username+'/audio_list.csv', 'w', newline='') as csvfile:
-                    fieldnames = ["Nombre archivo","Fecha de subida", "F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+                    fieldnames = ["Nombre archivo","Timestamp","Fecha de cálculo", "F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     new_user = False
@@ -120,8 +120,8 @@ def display_hourly_graph_view(request):
         for row in csvreader:
             user_list.append(row[0])
             date_list.append(row[2])
-            #To get the desired value, we have to add 3 to the index received (the first 2 rows are for username, filename and date)
-            arg_list.append(row[int(index)+3])
+            #To get the desired value, we have to add 4 to the index received (the first 2 rows are for username, filename, timestamp and upload date)
+            arg_list.append(row[int(index)+4])
         #Since we want to show only based on the hour, we set all dates to the same year, month and day, so that hour and minutes are the only difference (the date was picked arbitrarily)
         #The data in the CSV is stored as strings, so we change it to the correct type
         date_list[1:]=[datetime.strptime(x, '%Y-%m-%d %H:%M').replace(year=2010,month=1,day=1) for x in date_list[1:]]
@@ -150,8 +150,8 @@ def display_historical_graph_view(request):
         for row in csvreader:
             user_list.append(row[0])
             date_list.append(row[2])
-            #To get the desired value, we have to add 3 to the index received (the first 2 rows are for username, filename and date)
-            arg_list.append(row[int(index)+3])
+            #To get the desired value, we have to add 4 to the index received (the first 2 rows are for username, filename, timestamp and upload date)
+            arg_list.append(row[int(index)+4])
         #The data in the CSV is stored as strings, so we change it to the correct type
         date_list[1:]=[datetime.strptime(x, '%Y-%m-%d %H:%M') for x in date_list[1:]]
         arg_list[1:]=[float(x) for x in arg_list[1:]]

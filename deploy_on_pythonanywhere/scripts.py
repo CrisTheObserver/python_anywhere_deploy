@@ -3,8 +3,9 @@ from parselmouth import praat
 import numpy as np
 import csv
 from datetime import datetime
+from datetime import timedelta
 
-def audio_analysis(path, audio_name):
+def audio_analysis(path, audio_name,timestamp=datetime.today()-timedelta(hours=2)):
     sound = parselmouth.Sound(path)
     f0min=75
     f0max=300
@@ -53,6 +54,7 @@ def audio_analysis(path, audio_name):
 
     return {
         "name": audio_name,
+        "timestamp":timestamp.strftime('%Y-%m-%d %H:%M'),
         "date":datetime.today().strftime('%Y-%m-%d %H:%M'),
         "f0": round(F0, 1),
         "f1": round(np.nanmean(n_f1), 1),
