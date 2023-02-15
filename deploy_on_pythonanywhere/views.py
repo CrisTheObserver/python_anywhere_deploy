@@ -33,7 +33,7 @@ def upload_audio_view(request):
             #Creating CSV file in case we have a new user
             if new_user:
                 with open(username+'/audio_list.csv', 'w', newline='') as csvfile:
-                    fieldnames = ["Nombre archivo","Timestamp","Fecha de cálculo", "F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
+                    fieldnames = ["Nombre archivo","Timestamp","Fecha de calculo", "F0","F1","F2","F3","F4","Intensidad","HNR","Local Jitter","Local Absolute Jitter", "Rap Jitter", "ppq5 Jitter","ddp Jitter","Local Shimmer","Local db Shimmer","apq3 Shimmer","aqpq5 Shimmer","apq11 Shimmer","dda Shimmer"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     new_user = False
