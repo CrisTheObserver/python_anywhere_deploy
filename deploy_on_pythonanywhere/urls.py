@@ -19,7 +19,8 @@ from deploy_on_pythonanywhere import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.upload_audio_view),
+    path('', views.update_csv_view),
+    path('upload/', views.upload_audio_view),
     path('show_audio/', views.show_audio_view),
     path('historical/', views.historical_csv_view),
     path('download_file/', views.download_file),

@@ -77,15 +77,16 @@ def audio_analysis(path, audio_name,timestamp=datetime.today()-timedelta(hours=2
         }
 
 #This function receives a dictionary and write its information in the specified CSV file
-def write_csv(new_data, username, filename):
+def write_csv(new_data, username, filename, id_audio=-1):
     with open(filename, 'a', newline='') as csvfile:
         historical_writer = csv.writer(csvfile)
         #if we're writing the Historical CSV, we manually add the username field
         if filename == 'historical.csv':
-            new_row = [username]
+            new_row = [username,id_audio]
         else:
-            new_row = []
+            new_row = [id_audio]
         
         for key in new_data:
             new_row += [new_data[key]]
         historical_writer.writerow(new_row)
+        csvfile.close()

@@ -21,7 +21,10 @@
         </table>
         {% if filename %}
         <a href="../download_file/?filename={{filename}}">
-            <button type="button" class="btn btn-primary">Descargar</button>
+            <button type="button" class="btn btn-primary">Descargar como Excel</button>
+        </a>
+        <a href="../download_file/?filename=log.txt">
+            <button type="button" class="btn btn-danger">Descargar log de errores</button>
         </a>
         {% endif %}
 {% endblock content %}
