@@ -68,6 +68,7 @@ def update_csv_view(request):
                     with open('log.txt', 'a') as f:
                         f.write('[{0}] Hubo un error al analizar el archivo {1} del usuario {2}\n'.format(datetime.today().strftime('%Y-%m-%d %H:%M'), audio_name, username))
                         f.close()
+                    os.remove(username+'/'+audio_name)
 
         return HttpResponseRedirect('/historical/')
 
