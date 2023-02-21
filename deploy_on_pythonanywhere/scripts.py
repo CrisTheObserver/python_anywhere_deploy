@@ -3,7 +3,6 @@ from parselmouth import praat
 import numpy as np
 import csv
 from datetime import datetime
-from datetime import timedelta
 
 def audio_analysis(path, audio_name,timestamp=datetime.today()):
     sound = parselmouth.Sound(path)
