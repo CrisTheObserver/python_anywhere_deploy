@@ -19,12 +19,14 @@
             </tr>
             {% endfor %}
         </table>
-        {% if filename %}
+        {% if filename%}
         <a href="../download_file/?filename={{filename}}">
             <button type="button" class="btn btn-primary">Descargar como Excel</button>
         </a>
+        {% if filename == 'historical.csv' %}
         <a href="../download_file/?filename=log.txt">
             <button type="button" class="btn btn-danger">Descargar log de errores</button>
         </a>
+        {% endif %}
         {% endif %}
 {% endblock content %}

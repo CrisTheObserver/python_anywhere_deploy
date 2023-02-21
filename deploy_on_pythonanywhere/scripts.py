@@ -5,7 +5,7 @@ import csv
 from datetime import datetime
 from datetime import timedelta
 
-def audio_analysis(path, audio_name,timestamp=datetime.today()-timedelta(hours=2)):
+def audio_analysis(path, audio_name,timestamp=datetime.today()):
     sound = parselmouth.Sound(path)
     f0min=75
     f0max=300
@@ -77,14 +77,31 @@ def audio_analysis(path, audio_name,timestamp=datetime.today()-timedelta(hours=2
         }
 
 #This function receives a dictionary and write its information in the specified CSV file
-def write_csv(new_data, username, filename, id_audio=-1):
+def write_csv(new_data, username, filename, id_audio):
     with open(filename, 'a', newline='') as csvfile:
         historical_writer = csv.writer(csvfile)
         #if we're writing the Historical CSV, we manually add the username field
         if filename == 'historical.csv':
             new_row = [username,id_audio]
+        #otherwise we're writing on an audio_list file
         else:
             new_row = [id_audio]
+        
+        for key in new_data:
+            new_row += [new_data[key]]
+        historical_writer.writerow(new_row)
+        csvfile.close()
+
+#Identical to the previous one, but for web upload
+def write_web_csv(new_data, username, filename):
+    with open(filename, 'a', newline='') as csvfile:
+        historical_writer = csv.writer(csvfile)
+        #if we're writing the Historical CSV, we manually add the username field
+        if filename == 'web_historical.csv':
+            new_row = [username]
+        #otherwise we're writing on an audio_list file
+        else:
+            new_row = []
         
         for key in new_data:
             new_row += [new_data[key]]
